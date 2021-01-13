@@ -1,0 +1,41 @@
+﻿using ClassifiedAds.Application;
+using ClassifiedAds.Application.Decorators.AuditLog;
+using ClassifiedAds.Application.Decorators.DatabaseRetry;
+using ClassifiedAds.Modules.Identity.Contracts.DTOs;
+using ClassifiedAds.Modules.Identity.Entities;
+using ClassifiedAds.Modules.Identity.Repositories;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ClassifiedAds.Modules.Identity.Queries.Roles
+{
+    public class GetUsersQuery : UserQueryOptions, IQuery<List<User>>
+    {
+    }
+
+    [AuditLog]
+    [DatabaseRetry(retryTimes: 4)]
+    public class GetUsersQueryHandler : IQueryHandler<GetUsersQuery, List<User>>
+    {
+        private readonly IUserRepository _userRepository;
+
+        public GetUsersQueryHandler(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
+        public List<User> Handle(GetUsersQuery query)
+        {
+            var db = _userRepository.Get(new UserQueryOptions
+            {
+                IncludeClaims = query.IncludeClaims,
+                IncludeUserRoles = query.IncludeUserRoles,
+                IncludeRoles = query.IncludeRoles,
+                AsNoTracking = query.AsNoTracking,
+            });
+
+            return db.ToList();
+        }
+
+    }
+}

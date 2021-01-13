@@ -52,20 +52,20 @@
 
   | Project  | Configuration File | Configuration Key |
   | -------- | ------------------ | ----------------- |
-  | ClassifiedAds.Migrator | [appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.Migrator/appsettings.json) | ConnectionStrings:ClassifiedAds |
-  | ClassifiedAds.BackgroundServer | [appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.BackgroundServer/appsettings.json) | ConnectionStrings:ClassifiedAds |
-  | ClassifiedAds.IdentityServer | [appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.IdentityServer/appsettings.json) | ConnectionStrings:ClassifiedAds |
-  | ClassifiedAds.WebAPI | [appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebAPI/appsettings.json) | ConnectionStrings:ClassifiedAds |
-  | ClassifiedAds.WebMVC | [appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebMVC/appsettings.json) | ConnectionStrings:ClassifiedAds |
+  | ClassifiedAds.Migrator | [appsettings.json](/src/Monolith/ClassifiedAds.Migrator/appsettings.json) | ConnectionStrings:ClassifiedAds |
+  | ClassifiedAds.BackgroundServer | [appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json) | ConnectionStrings:ClassifiedAds |
+  | ClassifiedAds.IdentityServer | [appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json) | ConnectionStrings:ClassifiedAds |
+  | ClassifiedAds.WebAPI | [appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json) | ConnectionStrings:ClassifiedAds |
+  | ClassifiedAds.WebMVC | [appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json) | ConnectionStrings:ClassifiedAds |
 
 
 - Run Migration:
   + Option 1: Using dotnet cli:
     + Install **dotnet-ef** cli:
       ```
-      dotnet tool install --global dotnet-ef --version="3.1"
+      dotnet tool install --global dotnet-ef --version="5.0"
       ```
-    + Navigate to [ClassifiedAds.Migrator](/src/ClassifiedAds.Monolith/ClassifiedAds.Migrator/) and run these commands:
+    + Navigate to [ClassifiedAds.Migrator](/src/Monolith/ClassifiedAds.Migrator/) and run these commands:
       ```
       dotnet ef migrations add Init --context AdsDbContext -o Migrations/AdsDb
       dotnet ef migrations add Init --context ConfigurationDbContext -o Migrations/ConfigurationDb
@@ -93,9 +93,64 @@
 </details>
 
 <details>
+  <summary><b>Additional Configuration Sources</b></summary>
+  
+  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json) and jump to **ConfigurationSources** section.
+    ```js
+    "ConfigurationSources": {
+      "SqlServer": {
+        "IsEnabled": false,
+        "ConnectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#",
+        "SqlQuery": "select [Key], [Value] from ConfigurationEntries"
+      },
+      "AzureKeyVault": {
+        "IsEnabled": false,
+        "VaultName": "https://xxx.vault.azure.net/"
+      }
+    },
+    ```
+
+  - Get from Sql Server database:
+    ```js
+    "ConfigurationSources": {
+      "SqlServer": {
+        "IsEnabled": true,
+        "ConnectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#",
+        "SqlQuery": "select [Key], [Value] from ConfigurationEntries"
+      },
+    },
+    ```
+
+  - Get from Azure Key Vault:
+    ```js
+    "ConfigurationSources": {
+      "AzureKeyVault": {
+        "IsEnabled": true,
+        "VaultName": "https://xxx.vault.azure.net/"
+      }
+    },
+    ```
+
+  - Use Both:
+    ```js
+    "ConfigurationSources": {
+      "SqlServer": {
+        "IsEnabled": true,
+        "ConnectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#",
+        "SqlQuery": "select [Key], [Value] from ConfigurationEntries"
+      },
+      "AzureKeyVault": {
+        "IsEnabled": true,
+        "VaultName": "https://xxx.vault.azure.net/"
+      }
+    },
+    ```
+</details>
+
+<details>
   <summary><b>Storage</b></summary>
   
-  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebMVC/appsettings.json) and jump to **Storage** section.
+  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json), [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json) and jump to **Storage** section.
     ```js
     "Storage": {
       "Provider": "Local",
@@ -140,7 +195,11 @@
 <details>
   <summary><b>Message Broker</b></summary>
   
-  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebMVC/appsettings.json) and [ClassifiedAds.BackgroundServer/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.BackgroundServer/appsettings.json) and jump to **MessageBroker** section.
+  - Open below files and jump to **MessageBroker** section:
+    + [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json)
+    + [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json)
+    + [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json)
+    + [ClassifiedAds.BackgroundServer/appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json)
     ```js
     "MessageBroker": {
       "Provider": "RabbitMQ",
@@ -156,11 +215,19 @@
         "UserName": "guest",
         "Password": "guest",
         "ExchangeName": "amq.direct",
-        "RoutingKey_FileUploaded": "classifiedadds_fileuploaded",
-        "RoutingKey_FileDeleted": "classifiedadds_filedeleted",
-        "QueueName_FileUploaded": "classifiedadds_fileuploaded",
-        "QueueName_FileDeleted": "classifiedadds_filedeleted"
-      },
+        "RoutingKeys": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        },
+        "QueueNames": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        }
+      }
     }
     ```
 
@@ -170,9 +237,13 @@
       "Provider": "Kafka",
       "Kafka": {
         "BootstrapServers": "localhost:9092",
-        "Topic_FileUploaded": "classifiedadds_fileuploaded",
-        "Topic_FileDeleted": "classifiedadds_filedeleted"
-      },
+        "Topics": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        },
+      }
     }
     ```
 
@@ -182,9 +253,13 @@
       "Provider": "AzureQueue",
       "AzureQueue": {
         "ConnectionString": "xxx",
-        "QueueName_FileUploaded": "classifiedadds-fileuploaded",
-        "QueueName_FileDeleted": "classifiedadds-filedeleted"
-      },
+        "QueueNames": {
+          "FileUploadedEvent": "classifiedadds-fileuploaded",
+          "FileDeletedEvent": "classifiedadds-filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds-emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds-smscreated"
+        }
+      }
     }
     ```
 
@@ -194,8 +269,52 @@
       "Provider": "AzureServiceBus",
       "AzureServiceBus": {
         "ConnectionString": "xxx",
-        "QueueName_FileUploaded": "classifiedadds_fileuploaded",
-        "QueueName_FileDeleted": "classifiedadds_filedeleted"
+        "QueueNames": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        }
+      }
+    }
+    ```
+	
+  - Use Azure Event Grid:
+    ```js
+    "MessageBroker": {
+      "Provider": "AzureEventGrid",
+      "AzureEventGrid": {
+        "DomainEndpoint": "https://xxx.xxx-1.eventgrid.azure.net/api/events",
+        "DomainKey": "xxxx",
+        "Topics": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted"
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        }
+      }
+    }
+    ```
+	
+  - Use Azure Event Hubs:
+    ```js
+    "MessageBroker": {
+      "Provider": "AzureEventHub",
+      "AzureEventHub": {
+        "ConnectionString": "Endpoint=sb://xxx.servicebus.windows.net/;SharedAccessKeyName=xxx;SharedAccessKey=xxx",
+        "Hubs": {
+          "FileUploadedEvent": "classifiedadds_fileuploaded",
+          "FileDeletedEvent": "classifiedadds_filedeleted",
+          "EmailMessageCreatedEvent": "classifiedadds_emailcreated",
+          "SmsMessageCreatedEvent": "classifiedadds_smscreated"
+        },
+        "StorageConnectionString": "DefaultEndpointsProtocol=https;AccountName=xxx;AccountKey=xxx;EndpointSuffix=core.windows.net",
+        "StorageContainerNames": {
+          "FileUploadedEvent": "eventhub-fileuploaded",
+          "FileDeletedEvent": "eventhub-filedeleted",
+          "EmailMessageCreatedEvent": "eventhub-emailcreated",
+          "SmsMessageCreatedEvent": "eventhub-smscreated"
+        }
       }
     }
     ```
@@ -205,10 +324,10 @@
   <summary><b>Logging</b></summary>
   
   - Open and jump to **Logging** section of below files:
-    + [ClassifiedAds.WebAPI/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebAPI/appsettings.json)
-    + [ClassifiedAds.WebMVC/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebMVC/appsettings.json)
-    + [ClassifiedAds.IdentityServer/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.IdentityServer/appsettings.json)
-    + [ClassifiedAds.BackgroundServer/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.BackgroundServer/appsettings.json)
+    + [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json)
+    + [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json)
+    + [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json)
+    + [ClassifiedAds.BackgroundServer/appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json)
     ```js
     "Logging": {
       "LogLevel": {
@@ -284,9 +403,199 @@
 </details>
 
 <details>
+  <summary><b>Caching</b></summary>
+  
+  - Open and jump to **Caching** section of below files:
+    + [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json)
+    + [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json)
+    + [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json)
+    ```js
+    "Caching": {
+      "InMemory": {
+
+      },
+      "Distributed": {
+
+      }
+    },
+    ```
+  - Configure options for In Memory Cache:
+    ```js
+    "Caching": {
+      "InMemory": {
+        "SizeLimit": null
+      },
+    },
+    ```
+  - Use In Memory Distributed Cache (For Local Testing):
+    ```js
+    "Caching": {
+      "Distributed": {
+        "Provider": "InMemory",
+        "InMemory": {
+          "SizeLimit": null
+        }
+      }
+    },
+    ```
+  - Use Redis Distributed Cache:
+    ```js
+    "Caching": {
+      "Distributed": {
+        "Provider": "Redis",
+        "Redis": {
+          "Configuration": "xxx.redis.cache.windows.net:6380,password=xxx,ssl=True,abortConnect=False",
+          "InstanceName": ""
+        }
+      }
+    },
+    ```
+  - Use Sql Server Distributed Cache:
+    ```js
+	dotnet tool install --global dotnet-sql-cache --version="5.0"
+	dotnet sql-cache create "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#" dbo CacheEntries
+    ```
+    ```js
+    "Caching": {
+      "Distributed": {
+        "Provider": "SqlServer",
+        "SqlServer": {
+          "ConnectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#",
+          "SchemaName": "dbo",
+          "TableName": "CacheEntries"
+        }
+      }
+    },
+    ```
+</details>
+
+<details>
+  <summary><b>Monitoring</b></summary>
+  
+  - Open and jump to **Monitoring** section of below files:
+    + [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json)
+    + [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json)
+    + [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json)
+    ```js
+    "Monitoring": {
+      "MiniProfiler": {
+        
+      },
+      "AzureApplicationInsights": {
+        
+      }
+    },
+    ```
+  - Use MiniProfiler:
+    ```js
+    "Monitoring": {
+      "MiniProfiler": {
+        "IsEnabled": true,
+        "SqlServerStorage": {
+          "ConectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true",
+          "ProfilersTable": "MiniProfilers",
+          "TimingsTable": "MiniProfilerTimings",
+          "ClientTimingsTable": "MiniProfilerClientTimings"
+        }
+      },
+    },
+    ```
+  - Use Azure Application Insights:
+    ```js
+	"Monitoring": {
+      "AzureApplicationInsights": {
+        "IsEnabled": true,
+		"InstrumentationKey": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+		"EnableSqlCommandTextInstrumentation": true
+      }
+	},
+    ```
+  - Use AppMetrics:
+    ```js
+	"Monitoring": {
+      "AppMetrics": {
+        "IsEnabled": true,
+        "MetricsOptions": {
+          "DefaultContextLabel": "ClassifiedAds.WebAPI",
+          "Enabled": true,
+          "ReportingEnabled": true
+        },
+        "MetricsWebTrackingOptions": {
+          "ApdexTrackingEnabled": true,
+          "ApdexTSeconds": 0.1,
+          "IgnoredHttpStatusCodes": [ 404 ],
+          "IgnoredRoutesRegexPatterns": [],
+          "OAuth2TrackingEnabled": true
+        },
+        "MetricEndpointsOptions": {
+          "MetricsEndpointEnabled": true,
+          "MetricsTextEndpointEnabled": true,
+          "EnvironmentInfoEndpointEnabled": true
+        }
+      }
+	},
+    ```
+  - Use Both:
+    ```js
+    "Monitoring": {
+      "MiniProfiler": {
+        "IsEnabled": true,
+        "SqlServerStorage": {
+          "ConectionString": "Server=.;Database=ClassifiedAds;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true",
+          "ProfilersTable": "MiniProfilers",
+          "TimingsTable": "MiniProfilerTimings",
+          "ClientTimingsTable": "MiniProfilerClientTimings"
+        }
+      },
+      "AzureApplicationInsights": {
+        "IsEnabled": true,
+        "InstrumentationKey": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "EnableSqlCommandTextInstrumentation": true
+      },
+      "AppMetrics": {
+        "IsEnabled": true,
+        "MetricsOptions": {
+          "DefaultContextLabel": "ClassifiedAds.WebAPI",
+          "Enabled": true,
+          "ReportingEnabled": true
+        },
+        "MetricsWebTrackingOptions": {
+          "ApdexTrackingEnabled": true,
+          "ApdexTSeconds": 0.1,
+          "IgnoredHttpStatusCodes": [ 404 ],
+          "IgnoredRoutesRegexPatterns": [],
+          "OAuth2TrackingEnabled": true
+        },
+        "MetricEndpointsOptions": {
+          "MetricsEndpointEnabled": true,
+          "MetricsTextEndpointEnabled": true,
+          "EnvironmentInfoEndpointEnabled": true
+        }
+      }
+    },
+    ```
+</details>
+
+<details>
+  <summary><b>Interceptors</b></summary>
+  
+  - Open and jump to **Interceptors** section of below files:
+    + [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json)
+    + [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json)
+    + [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json)
+    + [ClassifiedAds.BackgroundServer/appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json)
+    ```js
+    "Interceptors": {
+      "LoggingInterceptor": true,
+      "ErrorCatchingInterceptor": false
+    },
+    ```
+</details>
+
+<details>
   <summary><b>Security Headers</b></summary>
   
-  - Open [ClassifiedAds.WebAPI/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebAPI/appsettings.json) and jump to **SecurityHeaders** section:
+  - Open [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json) and jump to **SecurityHeaders** section:
     ```js
     "SecurityHeaders": {
       "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -294,7 +603,7 @@
       "Expires": "0"
     },
     ```
-  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebMVC/appsettings.json) and jump to **SecurityHeaders** section:
+  - Open [ClassifiedAds.WebMVC/appsettings.json](/src/Monolith/ClassifiedAds.WebMVC/appsettings.json) and jump to **SecurityHeaders** section:
     ```js
     "SecurityHeaders": {
       "Content-Security-Policy": "form-action 'self'; frame-ancestors 'none'",
@@ -313,17 +622,102 @@
 <details>
   <summary><b>Cross-Origin Resource Sharing (CORS)</b></summary>
   
-  - Open [ClassifiedAds.WebAPI/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.WebAPI/appsettings.json) and jump to **CORS** section:
+  - Open [ClassifiedAds.WebAPI/appsettings.json](/src/Monolith/ClassifiedAds.WebAPI/appsettings.json) and jump to **CORS** section:
     ```js
     "CORS": {
       "AllowAnyOrigin": false,
       "AllowedOrigins": [ "http://localhost:4200", "http://localhost:3000", "http://localhost:8080" ]
     },
     ```
-  - Open [ClassifiedAds.NotificationServer/appsettings.json](/src/ClassifiedAds.Monolith/ClassifiedAds.NotificationServer/appsettings.json) and jump to **CORS** section:
+  - Open [ClassifiedAds.NotificationServer/appsettings.json](/src/Monolith/ClassifiedAds.NotificationServer/appsettings.json) and jump to **CORS** section:
     ```js
     "CORS": {
       "AllowedOrigins": [ "https://localhost:44364", "http://host.docker.internal:9003" ]
+    }
+    ```
+</details>
+
+<details>
+  <summary><b>External Login</b></summary>
+  
+  - Open [ClassifiedAds.IdentityServer/appsettings.json](/src/Monolith/ClassifiedAds.IdentityServer/appsettings.json) and jump to **ExternalLogin** section:
+    ```js
+    "ExternalLogin": {
+      "AzureActiveDirectory": {
+        "IsEnabled": true,
+        "Authority": "https://login.microsoftonline.com/<Directory (tenant) ID>",
+        "ClientId": "<Application (client) ID",
+        "ClientSecret": "xxx"
+      },
+      "Microsoft": {
+        "IsEnabled": true,
+        "ClientId": "<Application (client) ID",
+        "ClientSecret": "xxx"
+      },
+      "Google": {
+        "IsEnabled": true,
+        "ClientId": "xxx",
+        "ClientSecret": "xxx"
+      },
+      "Facebook": {
+        "IsEnabled": true,
+        "AppId": "xxx",
+        "AppSecret": "xxx"
+      }
+    },
+    ```
+</details>
+
+<details>
+  <summary><b>Sending Email</b></summary>
+  
+  - Open [ClassifiedAds.BackgroundServer/appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json) and jump to **Notification -> Email** section:
+    ```js
+    "Notification": {
+      "Email": {
+        "Provider": "Fake",
+      }
+    }
+    ```
+  - Use SmtpClient:
+    ```js
+    "Notification": {
+      "Email": {
+        "Provider": "SmtpClient",
+        "SmtpClient": {
+          "Host": "localhost",
+          "Port": "",
+          "UserName": "",
+          "Password": "",
+          "EnableSsl": ""
+        }
+      }
+    }
+    ```
+</details>
+
+<details>
+  <summary><b>Sending SMS</b></summary>
+  
+  - Open [ClassifiedAds.BackgroundServer/appsettings.json](/src/Monolith/ClassifiedAds.BackgroundServer/appsettings.json) and jump to **Notification -> Sms** section:
+    ```js
+    "Notification": {
+      "Sms": {
+        "Provider": "Fake",
+      }
+    }
+    ```
+  - Use Twilio
+    ```js
+    "Notification": {
+      "Sms": {
+        "Provider": "Twilio",
+        "Twilio": {
+          "AccountSId": "",
+          "AuthToken": "",
+          "FromNumber": ""
+        }
+      }
     }
     ```
 </details>
@@ -354,32 +748,73 @@
 
 ## How to Build and Run Single Page Applications:
 - Angular:
-  + Navigate to folder: [ClassifiedAds.UIs/angular/](/src/ClassifiedAds.UIs/angular/)
+  + Navigate to folder: [UIs/angular/](/src/UIs/angular/)
     ```
     npm install
     ng serve
+    ```
+  + Update [environment.ts](/src/UIs/angular/src/environments/environment.ts) & [environment.prod.ts](/src/UIs/angular/src/environments/environment.prod.ts) 
+    ```ts
+    export const environment = {
+      OpenIdConnect: {
+        Authority: "https://localhost:44367",
+        ClientId: "ClassifiedAds.Angular"
+      },
+      ResourceServer: {
+        Endpoint: "https://localhost:44312/api/"
+      },
+      CurrentUrl: "http://localhost:4200/"
+    };
     ```
   + Go to http://localhost:4200/
 
     ![alt text](/docs/imgs/angular-home-page.png)
   
 - React:
-  + Navigate to folder: [ClassifiedAds.UIs/reactjs/](/src/ClassifiedAds.UIs/reactjs/)
+  + Navigate to folder: [UIs/reactjs/](/src/UIs/reactjs/)
     ```
     npm install
     npm run start
+    ```
+  + Update [environment.dev.js](/src/UIs/reactjs/src/environments/environment.dev.js) & [environment.js](/src/UIs/reactjs/src/environments/environment.js) 
+    ```js
+    const environment = {
+        OpenIdConnect: {
+            Authority: "https://localhost:44367",
+            ClientId: "ClassifiedAds.React"
+        },
+        ResourceServer: {
+            Endpoint: "https://localhost:44312/api/"
+        },
+        CurrentUrl: "http://localhost:3000/"
+    };
+    export default environment;
     ```
   + Go to http://localhost:3000/
   
     ![alt text](/docs/imgs/react-home-page.png)
   
 - Vue:
-  + Navigate to folder: [ClassifiedAds.UIs/vuejs/](/src/ClassifiedAds.UIs/vuejs/)
+  + Navigate to folder: [UIs/vuejs/](/src/UIs/vuejs/)
     ```
     npm install
     npm run serve
     ```
-  + Go to http://localhost:8080/
+  + Update [environment.dev.js](/src/UIs/vuejs/environments/environment.dev.js) & [environment.dev.js](/src/UIs/vuejs/environments/environment.js) 
+    ```js
+    const environment = {
+        OpenIdConnect: {
+            Authority: "https://localhost:44367",
+            ClientId: "ClassifiedAds.Vue"
+        },
+        ResourceServer: {
+            Endpoint: "https://localhost:44312/api/"
+        },
+        CurrentUrl: "http://localhost:8080/"
+    };
+    export default environment;
+    ```
++ Go to http://localhost:8080/
   
     ![alt text](/docs/imgs/vue-home-page.png)
 
@@ -391,16 +826,16 @@
 - Add Migrations if you haven't done on previous steps:
   + Install **dotnet-ef** cli:
     ```
-    dotnet tool install --global dotnet-ef --version="3.1"
+    dotnet tool install --global dotnet-ef --version="5.0"
     ```
-  + Navigate to [ClassifiedAds.Migrator](/src/ClassifiedAds.Monolith/ClassifiedAds.Migrator/) and run these commands:
+  + Navigate to [ClassifiedAds.Migrator](/src/Monolith/ClassifiedAds.Migrator/) and run these commands:
     ```
     dotnet ef migrations add Init --context AdsDbContext -o Migrations/AdsDb
     dotnet ef migrations add Init --context ConfigurationDbContext -o Migrations/ConfigurationDb
     dotnet ef migrations add Init --context PersistedGrantDbContext -o Migrations/PersistedGrantDb
     dotnet ef migrations add Init --context MiniProfilerDbContext -o Migrations/MiniProfilerDb
     ```
-- Navigate to [ClassifiedAds.Monolith](/src/ClassifiedAds.Monolith/) and run:
+- Navigate to [Monolith](/src/Monolith/) and run:
   ```
   docker-compose build
   docker-compose up
@@ -420,18 +855,54 @@
 - Open Blazor Home Page at: http://host.docker.internal:9008
 
   ![alt text](/docs/imgs/blazor-home-page.png)
+
+## How to Run Integration & End to End Tests:
+- Update [ClassifiedAds.IntegrationTests/appsettings.json](/src/Monolith/ClassifiedAds.IntegrationTests/appsettings.json)
+  ```js
+  {
+    "OpenIdConnect": {
+      "Authority": "https://localhost:44367",
+      "ClientId": "ClassifiedAds.WebMVC",
+      "ClientSecret": "secret",
+      "RequireHttpsMetadata": "true"
+    },
+    "WebAPI": {
+      "Endpoint": "https://localhost:44312"
+    },
+    "GraphQL": {
+      "Endpoint": "https://localhost:44392/graphql"
+    },
+    "Login": {
+      "UserName": "phong@gmail.com",
+      "Password": "v*7Un8b4rcN@<-RN",
+      "Scope": "ClassifiedAds.WebAPI"
+    }
+  }
+  ```
+- Download [Chrome Driver](https://chromedriver.chromium.org/downloads)
+
+  ![alt text](/docs/imgs/chrome_driver_path.png)
+
+- Update [ClassifiedAds.EndToEndTests/appsettings.json](/src/Monolith/ClassifiedAds.EndToEndTests/appsettings.json)
+  ```js
+  {
+    "ChromeDriverPath": "D:\\Downloads\\chromedriver_win32\\72",
+    "Login": {
+      "Url": "https://localhost:44364/Home/Login",
+      "UserName": "phong@gmail.com",
+      "Password": "v*7Un8b4rcN@<-RN"
+    }
+  }
+  ```
+  
+  ![alt text](/docs/imgs/run_e2e_tests.gif)
   
 ## Application URLs:
-| Project  | Launch URL | Docker Container URL| Docker Container URL|
-| -------- | ---------- | ------------------- | ------------------- |
-| BackgroundServer | https://localhost:44318 | http://localhost:9004 | http://host.docker.internal:9004 |
-| Blazor | https://localhost:44331 | http://localhost:9008 | http://host.docker.internal:9008 |
-| IdentityServer | https://localhost:44367 | http://localhost:9000 | http://host.docker.internal:9000 |
-| NotificationServer | https://localhost:44390 | http://localhost:9001 | http://host.docker.internal:9001 |
-| WebAPI | https://localhost:44312 | http://localhost:9002 | http://host.docker.internal:9002 |
-| WebMVC | https://localhost:44364 | http://localhost:9003 | http://host.docker.internal:9003 |
-| GraphQL | [https://localhost:44392](https://localhost:44392/ui/playground) | [http://localhost:9006](http://localhost:9006/ui/playground) | [http://host.docker.internal:9006](http://host.docker.internal:9006/ui/playground) |
-| Ocelot | [https://localhost:44340](https://localhost:44340/ocelot/products) | [http://localhost:9007](http://localhost:9007/ocelot/products) | [http://host.docker.internal:9007](http://host.docker.internal:9007/ocelot/products) |
-| Angular | http://localhost:4200/ | | |
-| React | http://localhost:3000/ | | |
-| Vue | http://localhost:8080/ | | |
+
+https://github.com/phongnguyend/Practical.CleanArchitecture/wiki/Application-URLs
+
+## Roadmap:
+
+https://github.com/phongnguyend/Practical.CleanArchitecture/wiki/Roadmap
+
+##
