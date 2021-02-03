@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClassifiedAds.Services.AuditLog.Queries
 {
@@ -32,16 +34,16 @@ namespace ClassifiedAds.Services.AuditLog.Queries
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public List<UserDTO> Handle(GetUsersQuery query)
+        public async Task<List<UserDTO>> HandleAsync(GetUsersQuery query, CancellationToken cancellationToken = default)
         {
-            var token = _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).GetAwaiter().GetResult();
+            var token = await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
             var headers = new Metadata
             {
                 { "Authorization", $"Bearer {token}" },
             };
 
             var client = new User.UserClient(ChannelFactory.Create(_configuration["Services:Identity:Grpc"]));
-            var response = client.GetUsersAsync(new GetUsersRequest(), headers).GetAwaiter().GetResult();
+            var response = await client.GetUsersAsync(new GetUsersRequest(), headers);
 
             return response.Users.Select(x => new UserDTO
             {

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace ClassifiedAds.Application.Decorators.AuditLog
@@ -14,11 +16,11 @@ namespace ClassifiedAds.Application.Decorators.AuditLog
             _handler = handler;
         }
 
-        public TResult Handle(TQuery query)
+        public Task<TResult> HandleAsync(TQuery query, CancellationToken cancellationToken = default)
         {
             string queryJson = JsonConvert.SerializeObject(query);
             Console.WriteLine($"Query of type {query.GetType().Name}: {queryJson}");
-            return _handler.Handle(query);
+            return _handler.HandleAsync(query, cancellationToken);
         }
     }
 }

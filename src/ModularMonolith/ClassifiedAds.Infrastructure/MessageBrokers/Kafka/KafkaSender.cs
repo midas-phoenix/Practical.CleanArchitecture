@@ -2,6 +2,7 @@
 using Confluent.Kafka;
 using Newtonsoft.Json;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.MessageBrokers.Kafka
@@ -25,12 +26,7 @@ namespace ClassifiedAds.Infrastructure.MessageBrokers.Kafka
             _producer.Dispose();
         }
 
-        public void Send(T message, MetaData metaData = null)
-        {
-            SendAsync(message, metaData).Wait();
-        }
-
-        private async Task SendAsync(T message, MetaData metaData)
+        public async Task SendAsync(T message, MetaData metaData, CancellationToken cancellationToken = default)
         {
             _ = await _producer.ProduceAsync(_topic, new Message<Null, string>
             {
@@ -39,7 +35,7 @@ namespace ClassifiedAds.Infrastructure.MessageBrokers.Kafka
                     Data = message,
                     MetaData = metaData,
                 }),
-            });
+            }, cancellationToken);
         }
     }
 }

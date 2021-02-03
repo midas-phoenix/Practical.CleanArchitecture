@@ -2,6 +2,7 @@
 using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.MessageBrokers.AzureServiceBus
@@ -17,12 +18,7 @@ namespace ClassifiedAds.Infrastructure.MessageBrokers.AzureServiceBus
             _queueName = queueName;
         }
 
-        public void Send(T message, MetaData metaData = null)
-        {
-            SendAsync(message, metaData).Wait();
-        }
-
-        private async Task SendAsync(T message, MetaData metaData)
+        public async Task SendAsync(T message, MetaData metaData, CancellationToken cancellationToken = default)
         {
             var queueClient = new QueueClient(_connectionString, _queueName);
             var bytes = new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new Message<T>

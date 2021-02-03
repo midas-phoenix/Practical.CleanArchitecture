@@ -1,11 +1,13 @@
 ﻿using ClassifiedAds.Application;
 using ClassifiedAds.Infrastructure.Grpc;
-using ClassifiedAds.Infrastructure.Notification.Email;
+using ClassifiedAds.Services.Identity.DTOs;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System.Threading;
+using System.Threading.Tasks;
 using static ClassifiedAds.Services.Notification.Grpc.Email;
 
 namespace ClassifiedAds.Services.Identity.Commands.EmailMessages
@@ -26,9 +28,9 @@ namespace ClassifiedAds.Services.Identity.Commands.EmailMessages
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public void Handle(AddEmailMessageCommand command)
+        public async Task HandleAsync(AddEmailMessageCommand command, CancellationToken cancellationToken = default)
         {
-            var token = _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).GetAwaiter().GetResult();
+            var token = await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
             var headers = new Metadata
             {
                 { "Authorization", $"Bearer {token}" },

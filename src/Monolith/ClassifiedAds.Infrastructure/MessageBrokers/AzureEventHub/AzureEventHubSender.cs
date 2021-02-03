@@ -2,6 +2,7 @@
 using Microsoft.Azure.EventHubs;
 using Newtonsoft.Json;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.MessageBrokers.AzureEventHub
@@ -17,12 +18,7 @@ namespace ClassifiedAds.Infrastructure.MessageBrokers.AzureEventHub
             _hubName = hubName;
         }
 
-        public void Send(T message, MetaData metaData = null)
-        {
-            SendAsync(message, metaData).GetAwaiter().GetResult();
-        }
-
-        private async Task SendAsync(T message, MetaData metaData)
+        public async Task SendAsync(T message, MetaData metaData, CancellationToken cancellationToken = default)
         {
             var connectionStringBuilder = new EventHubsConnectionStringBuilder(_connectionString)
             {

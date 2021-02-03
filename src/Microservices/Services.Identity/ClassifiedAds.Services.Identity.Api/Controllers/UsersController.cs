@@ -1,9 +1,9 @@
 ﻿using ClassifiedAds.Application;
-using ClassifiedAds.Infrastructure.Notification.Email;
 using ClassifiedAds.Services.Identity.Commands.EmailMessages;
 using ClassifiedAds.Services.Identity.Commands.Users;
 using ClassifiedAds.Services.Identity.DTOs;
 using ClassifiedAds.Services.Identity.Entities;
+using ClassifiedAds.Services.Identity.Models;
 using ClassifiedAds.Services.Identity.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,27 +39,27 @@ namespace ClassifiedAds.Services.Identity.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<User>> Get()
+        public async Task<ActionResult<IEnumerable<User>>> Get()
         {
-            var users = _dispatcher.Dispatch(new GetUsersQuery());
-            var model = users.ToDTOs();
+            var users = await _dispatcher.DispatchAsync(new GetUsersQuery());
+            var model = users.ToModels();
             return Ok(model);
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<User> Get(Guid id)
+        public async Task<ActionResult<User>> Get(Guid id)
         {
-            var user = _dispatcher.Dispatch(new GetUserQuery { Id = id, AsNoTracking = true });
-            var model = user.ToDTO();
+            var user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id, AsNoTracking = true });
+            var model = user.ToModel();
             return Ok(model);
         }
 
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<ActionResult<User>> Post([FromBody] UserDTO model)
+        public async Task<ActionResult<User>> Post([FromBody] UserModel model)
         {
             User user = new User
             {
@@ -78,7 +78,7 @@ namespace ClassifiedAds.Services.Identity.Controllers
 
             _ = await _userManager.CreateAsync(user);
 
-            model = user.ToDTO();
+            model = user.ToModel();
             return Created($"/api/users/{model.Id}", model);
         }
 
@@ -86,9 +86,9 @@ namespace ClassifiedAds.Services.Identity.Controllers
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Put(Guid id, [FromBody] UserDTO model)
+        public async Task<ActionResult> Put(Guid id, [FromBody] UserModel model)
         {
-            User user = _dispatcher.Dispatch(new GetUserQuery { Id = id });
+            User user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id });
 
             user.UserName = model.UserName;
             user.NormalizedUserName = model.UserName.ToUpper();
@@ -104,7 +104,7 @@ namespace ClassifiedAds.Services.Identity.Controllers
 
             _ = await _userManager.UpdateAsync(user);
 
-            model = user.ToDTO();
+            model = user.ToModel();
             return Ok(model);
         }
 
@@ -112,9 +112,9 @@ namespace ClassifiedAds.Services.Identity.Controllers
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> SetPassword(Guid id, [FromBody] UserDTO model)
+        public async Task<ActionResult> SetPassword(Guid id, [FromBody] UserModel model)
         {
-            User user = _dispatcher.Dispatch(new GetUserQuery { Id = id });
+            User user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id });
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var rs = await _userManager.ResetPasswordAsync(user, token, model.Password);
@@ -130,10 +130,10 @@ namespace ClassifiedAds.Services.Identity.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id)
         {
-            var user = _dispatcher.Dispatch(new GetUserQuery { Id = id });
-            _dispatcher.Dispatch(new DeleteUserCommand { User = user });
+            var user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id });
+            await _dispatcher.DispatchAsync(new DeleteUserCommand { User = user });
 
             return Ok();
         }
@@ -141,14 +141,14 @@ namespace ClassifiedAds.Services.Identity.Controllers
         [HttpPost("{id}/passwordresetemail")]
         public async Task<ActionResult> SendResetPasswordEmail(Guid id)
         {
-            User user = _dispatcher.Dispatch(new GetUserQuery { Id = id });
+            User user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id });
 
             if (user != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var resetUrl = $"{_configuration["IdentityServerAuthentication:Authority"]}/Account/ResetPassword?token={HttpUtility.UrlEncode(token)}&email={user.Email}";
 
-                _dispatcher.Dispatch(new AddEmailMessageCommand
+                await _dispatcher.DispatchAsync(new AddEmailMessageCommand
                 {
                     EmailMessage = new EmailMessageDTO
                     {
@@ -170,7 +170,7 @@ namespace ClassifiedAds.Services.Identity.Controllers
         [HttpPost("{id}/emailaddressconfirmation")]
         public async Task<ActionResult> SendConfirmationEmailAddressEmail(Guid id)
         {
-            User user = _dispatcher.Dispatch(new GetUserQuery { Id = id });
+            User user = await _dispatcher.DispatchAsync(new GetUserQuery { Id = id });
 
             if (user != null)
             {
@@ -178,7 +178,7 @@ namespace ClassifiedAds.Services.Identity.Controllers
 
                 var confirmationEmail = $"{_configuration["IdentityServerAuthentication:Authority"]}/Account/ConfirmEmailAddress?token={HttpUtility.UrlEncode(token)}&email={user.Email}";
 
-                _dispatcher.Dispatch(new AddEmailMessageCommand
+                await _dispatcher.DispatchAsync(new AddEmailMessageCommand
                 {
                     EmailMessage = new EmailMessageDTO
                     {

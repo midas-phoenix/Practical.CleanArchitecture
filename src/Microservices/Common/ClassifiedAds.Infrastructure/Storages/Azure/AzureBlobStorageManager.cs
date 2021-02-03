@@ -1,6 +1,8 @@
 ﻿using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.Storages.Azure
 {
@@ -20,31 +22,29 @@ namespace ClassifiedAds.Infrastructure.Storages.Azure
             _container = blobClient.GetContainerReference(_containerName);
         }
 
-        public void Create(FileEntryDTO fileEntry, Stream stream)
+        public async Task CreateAsync(IFileEntry fileEntry, Stream stream, CancellationToken cancellationToken = default)
         {
-            _container.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+            await _container.CreateIfNotExistsAsync(cancellationToken);
 
             var name = fileEntry.Id.ToString();
             CloudBlockBlob blob = _container.GetBlockBlobReference(name);
-            blob.UploadFromStreamAsync(stream).Wait();
+            await blob.UploadFromStreamAsync(stream, cancellationToken);
 
             fileEntry.FileLocation = name;
         }
 
-        public void Delete(FileEntryDTO fileEntry)
+        public async Task DeleteAsync(IFileEntry fileEntry, CancellationToken cancellationToken = default)
         {
             CloudBlockBlob blob = _container.GetBlockBlobReference(fileEntry.FileLocation);
-            blob.DeleteAsync().Wait();
+            await blob.DeleteAsync(cancellationToken);
         }
 
-        public byte[] Read(FileEntryDTO fileEntry)
+        public async Task<byte[]> ReadAsync(IFileEntry fileEntry, CancellationToken cancellationToken = default)
         {
             CloudBlockBlob blob = _container.GetBlockBlobReference(fileEntry.FileLocation);
-            using (var stream = new MemoryStream())
-            {
-                blob.DownloadToStreamAsync(stream).Wait();
-                return stream.ToArray();
-            }
+            using var stream = new MemoryStream();
+            await blob.DownloadToStreamAsync(stream, cancellationToken);
+            return stream.ToArray();
         }
     }
 }

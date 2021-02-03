@@ -2,7 +2,10 @@
 using ClassifiedAds.Domain.Entities;
 using ClassifiedAds.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClassifiedAds.Modules.Identity.Repositories
 {
@@ -28,12 +31,12 @@ namespace ClassifiedAds.Modules.Identity.Repositories
             _dateTimeProvider = dateTimeProvider;
         }
 
-        public void AddOrUpdate(T entity)
+        public async Task AddOrUpdateAsync(T entity, CancellationToken cancellationToken = default)
         {
             if (entity.Id.Equals(default(TKey)))
             {
                 entity.CreatedDateTime = _dateTimeProvider.OffsetNow;
-                DbSet.Add(entity);
+                await DbSet.AddAsync(entity, cancellationToken);
             }
             else
             {
@@ -49,6 +52,21 @@ namespace ClassifiedAds.Modules.Identity.Repositories
         public IQueryable<T> GetAll()
         {
             return _dbContext.Set<T>();
+        }
+
+        public Task<T1> FirstOrDefaultAsync<T1>(IQueryable<T1> query)
+        {
+            return query.FirstOrDefaultAsync();
+        }
+
+        public Task<T1> SingleOrDefaultAsync<T1>(IQueryable<T1> query)
+        {
+            return query.SingleOrDefaultAsync();
+        }
+
+        public Task<List<T1>> ToListAsync<T1>(IQueryable<T1> query)
+        {
+            return query.ToListAsync();
         }
     }
 }

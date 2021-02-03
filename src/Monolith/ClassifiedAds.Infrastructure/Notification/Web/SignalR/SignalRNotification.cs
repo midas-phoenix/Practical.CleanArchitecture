@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.Notification.Web.SignalR
@@ -19,12 +20,7 @@ namespace ClassifiedAds.Infrastructure.Notification.Web.SignalR
             _eventName = eventName;
         }
 
-        public void Send(T message)
-        {
-            SendAsync(message).GetAwaiter().GetResult();
-        }
-
-        public async Task SendAsync(T message)
+        public async Task SendAsync(T message, CancellationToken cancellationToken = default)
         {
             HubConnection connection;
             lock (_lock)
@@ -44,11 +40,11 @@ namespace ClassifiedAds.Infrastructure.Notification.Web.SignalR
 
                 if (connection.State != HubConnectionState.Connected)
                 {
-                    connection.StartAsync().GetAwaiter().GetResult();
+                    connection.StartAsync(cancellationToken).GetAwaiter().GetResult();
                 }
             }
 
-            await connection.InvokeAsync(_eventName, message);
+            await connection.InvokeAsync(_eventName, message, cancellationToken);
         }
     }
 }

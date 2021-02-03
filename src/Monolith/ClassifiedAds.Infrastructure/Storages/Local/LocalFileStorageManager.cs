@@ -1,6 +1,7 @@
-﻿using ClassifiedAds.Domain.Entities;
-using ClassifiedAds.Domain.Infrastructure.Storages;
+﻿using ClassifiedAds.Domain.Infrastructure.Storages;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClassifiedAds.Infrastructure.Storages.Local
 {
@@ -13,31 +14,34 @@ namespace ClassifiedAds.Infrastructure.Storages.Local
             _rootPath = rootPath;
         }
 
-        public void Create(FileEntry fileEntry, Stream stream)
+        public async Task CreateAsync(IFileEntry fileEntry, Stream stream, CancellationToken cancellationToken = default)
         {
             var trustedFileNameForFileStorage = fileEntry.Id.ToString();
             var filePath = Path.Combine(_rootPath, trustedFileNameForFileStorage);
 
             using (var fileStream = File.Create(filePath))
             {
-                stream.CopyTo(fileStream);
+                await stream.CopyToAsync(fileStream, cancellationToken);
             }
 
             fileEntry.FileLocation = trustedFileNameForFileStorage;
         }
 
-        public void Delete(FileEntry fileEntry)
+        public async Task DeleteAsync(IFileEntry fileEntry, CancellationToken cancellationToken = default)
         {
-            var path = Path.Combine(_rootPath, fileEntry.FileLocation);
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
+            await Task.Run(() =>
+             {
+                 var path = Path.Combine(_rootPath, fileEntry.FileLocation);
+                 if (File.Exists(path))
+                 {
+                     File.Delete(path);
+                 }
+             }, cancellationToken);
         }
 
-        public byte[] Read(FileEntry fileEntry)
+        public Task<byte[]> ReadAsync(IFileEntry fileEntry, CancellationToken cancellationToken = default)
         {
-            return File.ReadAllBytes(Path.Combine(_rootPath, fileEntry.FileLocation));
+            return File.ReadAllBytesAsync(Path.Combine(_rootPath, fileEntry.FileLocation), cancellationToken);
         }
     }
 }

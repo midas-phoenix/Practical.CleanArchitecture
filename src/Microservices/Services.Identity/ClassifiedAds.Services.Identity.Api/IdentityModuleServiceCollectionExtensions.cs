@@ -1,5 +1,6 @@
 ﻿using ClassifiedAds.Services.Identity;
 using ClassifiedAds.Services.Identity.Entities;
+using ClassifiedAds.Services.Identity.PasswordValidators;
 using ClassifiedAds.Services.Identity.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -28,13 +29,18 @@ namespace Microsoft.Extensions.DependencyInjection
                         options.Tokens.EmailConfirmationTokenProvider = "EmailConfirmation";
                     })
                     .AddUserManager<UserManager<User>>()
-                    .AddDefaultTokenProviders()
-                    .AddTokenProvider<EmailConfirmationTokenProvider<User>>("EmailConfirmation");
+                    .AddTokenProviders()
+                    .AddPasswordValidators();
+
             services.AddTransient<IUserStore<User>, UserStore>();
             services.AddTransient<IRoleStore<Role>, RoleStore>();
 
-            services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(3));
-            services.Configure<EmailConfirmationTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromDays(2));
+            ConfigureOptions(services);
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Account/Login";
+            });
 
             services.AddMessageHandlers(Assembly.GetExecutingAssembly());
 
@@ -58,17 +64,61 @@ namespace Microsoft.Extensions.DependencyInjection
                         options.Tokens.EmailConfirmationTokenProvider = "EmailConfirmation";
                     })
                     .AddUserManager<UserManager<User>>()
-                    .AddDefaultTokenProviders()
-                    .AddTokenProvider<EmailConfirmationTokenProvider<User>>("EmailConfirmation");
+                    .AddTokenProviders()
+                    .AddPasswordValidators();
+
             services.AddTransient<IUserStore<User>, UserStore>();
             services.AddTransient<IRoleStore<Role>, RoleStore>();
 
-            services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(3));
-            services.Configure<EmailConfirmationTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromDays(2));
+            ConfigureOptions(services);
 
             services.AddMessageHandlers(Assembly.GetExecutingAssembly());
 
             return services;
+        }
+
+        private static IdentityBuilder AddTokenProviders(this IdentityBuilder identityBuilder)
+        {
+            identityBuilder
+                .AddDefaultTokenProviders()
+                .AddTokenProvider<EmailConfirmationTokenProvider<User>>("EmailConfirmation");
+
+            return identityBuilder;
+        }
+
+        private static IdentityBuilder AddPasswordValidators(this IdentityBuilder identityBuilder)
+        {
+            identityBuilder
+                .AddPasswordValidator<WeakPasswordValidator>()
+                .AddPasswordValidator<HistoricalPasswordValidator>();
+
+            return identityBuilder;
+        }
+
+        private static void ConfigureOptions(IServiceCollection services)
+        {
+            services.Configure<DataProtectionTokenProviderOptions>(options =>
+            {
+                options.TokenLifespan = TimeSpan.FromHours(3);
+            });
+
+            services.Configure<EmailConfirmationTokenProviderOptions>(options =>
+            {
+                options.TokenLifespan = TimeSpan.FromDays(2);
+            });
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                // Default Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+            });
+
+            services.Configure<PasswordHasherOptions>(option =>
+            {
+                option.IterationCount = 10000;
+            });
         }
 
         public static void MigrateIdentityDb(this IApplicationBuilder app)
